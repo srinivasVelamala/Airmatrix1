@@ -1,0 +1,14 @@
+{
+  "name": "AIRMATRIX",
+  "description": "Enterprise HVAC Maintenance Platform with real-time technician tracking, automated ticket workflows, and role-based dashboards.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ],
+  "majorCapabilities": [
+    "Real-time tracking",
+    "Role-based access control",
+    "Service analytics",
+    "Asset management"
+  ]
+}
