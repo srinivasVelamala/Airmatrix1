@@ -6,7 +6,8 @@ import {
   Filter, Calendar, Map as MapIcon, 
   Bell, ChevronRight, MoreVertical,
   Activity, CheckCircle, Clock, AlertTriangle,
-  MapPin, Loader2, LogOut, UserCheck, UserX
+  MapPin, Loader2, LogOut, UserCheck, UserX,
+  UserPlus
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -14,7 +15,7 @@ import {
   PieChart, Pie, Cell
 } from 'recharts';
 import { cn, getStatusColor, formatDate } from '../../lib/utils';
-import { getTickets, getUsers, updateUserStatus, type Ticket, type User } from '../../lib/supabase';
+import { getTickets, getUsers, updateUserStatus, assignTicket, type Ticket, type User } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
@@ -26,6 +27,8 @@ export default function AdminDashboard() {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [assigningTicketId, setAssigningTicketId] = useState<string | null>(null);
+  const [isAssigning, setIsAssigning] = useState(false);
 
   const fetchAllData = async () => {
     if (!myProfile) return;
@@ -66,6 +69,21 @@ export default function AdminDashboard() {
       toast.error('Error updating status');
     } finally {
       setIsUpdatingProfile(null);
+    }
+  };
+
+  const handleAssign = async (ticketId: string, employeeId: string) => {
+    if (!myProfile) return;
+    try {
+      setIsAssigning(true);
+      await assignTicket(ticketId, employeeId, myProfile.id);
+      setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, assigned_employee: employeeId, status: 'Assigned' as any } : t));
+      setAssigningTicketId(null);
+      toast.success('Ticket assigned successfully');
+    } catch (error: any) {
+      toast.error('Failed to assign ticket');
+    } finally {
+      setIsAssigning(false);
     }
   };
 
@@ -441,8 +459,52 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-slate-300" />
-                          <span className="text-xs font-bold text-slate-600">{getUserName(t.assigned_employee)}</span>
+                          {assigningTicketId === t.id ? (
+                            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 transition-all">
+                              <select
+                                className="bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-1.5 font-bold outline-none focus:ring-2 focus:ring-blue-100"
+                                onChange={(e) => handleAssign(t.id, e.target.value)}
+                                defaultValue=""
+                                disabled={isAssigning}
+                              >
+                                <option value="" disabled>Select Staff</option>
+                                {profiles
+                                  .filter(p => (p.role === 'employee' || p.is_admin) && p.approval_status === 'approved' && p.active)
+                                  .map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                  ))
+                                }
+                              </select>
+                              <button 
+                                onClick={() => setAssigningTicketId(null)}
+                                className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
+                              >
+                                <UserX size={14} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between w-full group/assign">
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "w-2 h-2 rounded-full",
+                                  t.assigned_employee ? "bg-blue-500" : "bg-slate-300"
+                                )} />
+                                <span className={cn(
+                                  "text-xs font-bold",
+                                  t.assigned_employee ? "text-slate-600" : "text-slate-400"
+                                )}>
+                                  {getUserName(t.assigned_employee)}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => setAssigningTicketId(t.id)}
+                                className="opacity-0 group-hover/assign:opacity-100 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                title="Assign Staff"
+                              >
+                                <UserPlus size={16} />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-8 py-6 text-right font-black text-xs text-slate-400 tracking-tighter">

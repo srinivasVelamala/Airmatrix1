@@ -152,6 +152,30 @@ export async function updateTicketStatus(ticketId: string, status: TicketStatus,
   }
 }
 
+export async function assignTicket(ticketId: string, employeeId: string, assignedBy: string) {
+  if (isMockMode) return;
+
+  const { error } = await supabase
+    .from('tickets')
+    .update({ 
+      assigned_employee: employeeId,
+      status: 'Assigned'
+    })
+    .eq('id', ticketId);
+
+  if (error) throw error;
+
+  // Add to history
+  await supabase
+    .from('ticket_status_history')
+    .insert([{
+      ticket_id: ticketId,
+      new_status: 'Assigned',
+      changed_by: assignedBy,
+      notes: `Ticket assigned to staff member`
+    }]);
+}
+
 export type UserRole = 'customer' | 'admin' | 'employee';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'disabled';
 
