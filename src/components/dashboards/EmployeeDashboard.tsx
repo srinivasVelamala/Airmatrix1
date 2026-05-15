@@ -6,7 +6,7 @@ import {
   Clock, MapPin, Camera, Clipboard,
   ChevronRight, ArrowLeft, Play,
   Check, X, AlertCircle, MessageSquare,
-  QrCode, Loader2
+  QrCode, Loader2, LogOut
 } from 'lucide-react';
 import { cn, getStatusColor, formatDate } from '../../lib/utils';
 import { supabase, isMockMode, type Ticket, type TicketStatus, getTickets, updateTicketStatus } from '../../lib/supabase';
@@ -130,24 +130,24 @@ export default function EmployeeDashboard() {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className="p-6 space-y-6"
+            className="p-4 space-y-4 lg:p-6 lg:space-y-6"
           >
             {/* Staff Header */}
-            <header className="flex justify-between items-center mb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-bold text-xl">
+            <header className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-lg">
                   {profile?.name?.[0]}
                 </div>
                 <div>
-                  <h2 className="font-bold text-lg leading-tight">{profile?.name}</h2>
-                  <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                    <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                    Online • On Duty
+                  <h2 className="font-bold text-base leading-tight">{profile?.name}</h2>
+                  <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                    Technician
                   </p>
                 </div>
               </div>
-              <button onClick={() => signOut()} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                <X size={20} className="text-slate-400" />
+              <button onClick={() => signOut()} className="p-2.5 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex-shrink-0">
+                <LogOut size={18} className="text-slate-400" />
               </button>
             </header>
 
@@ -156,61 +156,61 @@ export default function EmployeeDashboard() {
               <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-blue-600 p-6 rounded-[32px] shadow-xl shadow-blue-600/20"
+                className="bg-blue-600 p-5 rounded-[24px] shadow-xl shadow-blue-600/20"
                 onClick={() => setSelectedTicket(currentJob)}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="bg-white/20 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest">
                     Current Task
                   </div>
-                  <Play size={20} fill="currentColor" />
+                  <Play size={16} fill="currentColor" />
                 </div>
-                <h3 className="text-xl font-bold mb-1">{currentJob.customer_name}</h3>
-                <p className="text-blue-100 text-sm mb-4 line-clamp-1">{currentJob.address}</p>
-                <div className="flex items-center gap-2 text-xs font-bold bg-black/10 w-fit px-3 py-2 rounded-xl">
-                  <Clock size={14} />
+                <h3 className="text-lg font-black mb-0.5">{currentJob.customer_name}</h3>
+                <p className="text-blue-100 text-xs mb-3 line-clamp-1">{currentJob.address}</p>
+                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase bg-black/10 w-fit px-2.5 py-1.5 rounded-lg">
+                  <Clock size={12} />
                   Started {formatDate(currentJob.created_at)}
                 </div>
               </motion.div>
             )}
 
             {/* Task List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center justify-between px-1">
-                <h3 className="text-slate-400 text-xs font-black uppercase tracking-widest">Job Queue</h3>
-                {loading && <Loader2 size={14} className="animate-spin text-blue-500" />}
+                <h3 className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Job Queue</h3>
+                {loading && <Loader2 size={12} className="animate-spin text-blue-500" />}
               </div>
               
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-600">
-                  <Loader2 size={32} className="animate-spin" />
-                  <p className="text-xs font-bold uppercase tracking-wider">Syncing Jobs...</p>
+                  <Loader2 size={24} className="animate-spin" />
+                  <p className="text-[10px] font-bold uppercase tracking-wider">Syncing Jobs...</p>
                 </div>
               ) : tickets.filter(t => t.id !== currentJob?.id).length === 0 ? (
-                <div className="bg-white/5 border border-white/10 border-dashed rounded-3xl p-10 text-center">
-                  <Clipboard size={32} className="mx-auto mb-4 text-slate-700" />
-                  <p className="text-slate-500 text-sm font-medium">No pending tasks</p>
+                <div className="bg-white/5 border border-white/10 border-dashed rounded-2xl p-8 text-center">
+                  <Clipboard size={24} className="mx-auto mb-3 text-slate-700" />
+                  <p className="text-slate-500 text-xs font-medium">No pending tasks</p>
                 </div>
               ) : (
                 tickets.filter(t => t.id !== currentJob?.id).map((ticket) => (
                   <div 
                     key={ticket.id}
                     onClick={() => setSelectedTicket(ticket)}
-                    className="bg-white/5 border border-white/10 p-4 rounded-3xl flex items-center justify-between group active:bg-white/10 transition-all"
+                    className="bg-white/5 border border-white/10 p-3.5 rounded-2xl flex items-center justify-between group active:bg-white/10 transition-all active:scale-[0.98]"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <div className={cn(
-                         "w-12 h-12 rounded-2xl flex items-center justify-center",
+                         "w-10 h-10 rounded-xl flex items-center justify-center",
                          ticket.priority === 'High' ? "bg-red-500/20 text-red-500" : "bg-blue-500/20 text-blue-500"
                       )}>
-                        <Clipboard size={20} />
+                        <Clipboard size={18} />
                       </div>
                       <div>
-                        <h4 className="font-bold">{ticket.customer_name || 'Service Request'}</h4>
-                        <p className="text-slate-500 text-xs italic">{ticket.ac_type} • {ticket.status}</p>
+                        <h4 className="font-bold text-sm">{ticket.customer_name || 'Service Request'}</h4>
+                        <p className="text-slate-500 text-[10px] italic">{ticket.ac_type} • {ticket.status}</p>
                       </div>
                     </div>
-                    <ChevronRight className="text-slate-700 group-hover:text-slate-400" size={20} />
+                    <ChevronRight className="text-slate-700 group-hover:text-slate-400" size={16} />
                   </div>
                 ))
               )}

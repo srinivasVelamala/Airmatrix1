@@ -179,30 +179,35 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 lg:p-10 space-y-10 pb-20 overflow-x-hidden">
+      <main className="flex-1 p-4 lg:p-10 space-y-6 lg:space-y-10 pb-32 lg:pb-10 overflow-x-hidden">
         {/* Mobile Header */}
-        <header className="lg:hidden flex justify-between items-center mb-8">
-          <h1 className="text-xl font-black text-slate-900 tracking-tighter">AIRMATRIX</h1>
-          <button onClick={fetchAllData} className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-            {loading ? <Loader2 size={20} className="animate-spin" /> : <Activity size={20} className="text-blue-600" />}
-          </button>
+        <header className="lg:hidden flex justify-between items-center mb-6">
+          <h1 className="text-lg font-black text-slate-900 tracking-tighter">AIRMATRIX</h1>
+          <div className="flex gap-1.5 flex-shrink-0">
+            <button onClick={fetchAllData} className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 transition-active active:scale-95">
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <Activity size={18} className="text-blue-600" />}
+            </button>
+            <button onClick={() => signOut()} className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 flex-shrink-0 transition-active active:scale-95">
+              <LogOut size={18} />
+            </button>
+          </div>
         </header>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 lg:gap-6">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Operations</p>
+            <div className="flex items-center gap-1.5 mb-1 lg:mb-2">
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Live Operations</p>
             </div>
-            <h2 className="text-4xl font-black text-slate-900 tracking-tight">{activeTab === 'Users' ? 'User Approvals' : 'Admin Dashboard'}</h2>
+            <h2 className="text-2xl lg:text-4xl font-black text-slate-900 tracking-tight">{activeTab === 'Users' ? 'User Approvals' : 'Admin Dashboard'}</h2>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <button 
               onClick={fetchAllData}
-              className="bg-white text-slate-900 px-6 py-4 rounded-[24px] font-bold text-sm flex items-center gap-2 border border-slate-200 shadow-sm hover:bg-slate-50 transition-all"
+              className="bg-white text-slate-900 px-4 py-2.5 lg:px-6 lg:py-4 rounded-xl lg:rounded-[24px] font-bold text-xs lg:text-sm flex items-center gap-2 border border-slate-200 shadow-sm hover:bg-slate-50 active:scale-95 transition-all"
             >
-              {loading ? <Loader2 size={18} className="animate-spin text-blue-600" /> : <Activity size={18} className="text-blue-600" />}
-              Sync Data
+              {loading ? <Loader2 size={14} className="animate-spin text-blue-600" /> : <Activity size={14} className="text-blue-600" />}
+              Sync
             </button>
           </div>
         </div>
@@ -210,7 +215,7 @@ export default function AdminDashboard() {
         {activeTab === 'Overview' && (
           <>
             {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
             {[
                 { label: 'Pending Requests', value: pendingCount, icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50' },
                 { label: 'Active Users', value: profiles.filter(p => p.active).length, icon: Users, color: 'text-amber-600', bg: 'bg-amber-50' },
@@ -222,17 +227,17 @@ export default function AdminDashboard() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.1 }}
                   key={i}
-                  className="bg-white p-7 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 transition-all group"
+                  className="bg-white p-4 lg:p-7 rounded-2xl lg:rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 transition-all group active:scale-95"
                   onClick={() => stat.label === 'Pending Approvals' && setActiveTab('Users')}
                 >
-                  <div className="flex justify-between items-start mb-6">
-                    <div className={cn("p-4 rounded-3xl group-hover:scale-110 transition-transform", stat.bg)}>
-                      <stat.icon className={cn(stat.color)} size={28} />
+                  <div className="flex justify-between items-start mb-3 lg:mb-6">
+                    <div className={cn("p-2 lg:p-4 rounded-xl lg:rounded-3xl group-hover:scale-110 transition-transform", stat.bg)}>
+                      <stat.icon className={cn(stat.color)} size={18} />
                     </div>
                   </div>
-                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1.5">{stat.label}</p>
-                  <p className="text-4xl font-black text-slate-900 tabular-nums">
-                    {loading ? <Loader2 className="animate-spin text-slate-200" size={32} /> : stat.value}
+                  <p className="text-slate-400 text-[8px] lg:text-[10px] font-black uppercase tracking-[0.15em] mb-1 lg:mb-1.5">{stat.label}</p>
+                  <p className="text-xl lg:text-4xl font-black text-slate-900 tabular-nums">
+                    {loading ? <Loader2 className="animate-spin text-slate-200" size={20} /> : stat.value}
                   </p>
                 </motion.div>
               ))}
@@ -241,18 +246,18 @@ export default function AdminDashboard() {
         {/* Charts & Map Sections */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Main Chart */}
-          <div className="xl:col-span-2 bg-white p-8 lg:p-10 rounded-[48px] border border-slate-100 shadow-sm min-h-[450px]">
-            <div className="flex justify-between items-center mb-10">
+          <div className="xl:col-span-2 bg-white lg:p-10 p-6 lg:rounded-[48px] rounded-3xl border border-slate-100 shadow-sm min-h-[400px] lg:min-h-[450px]">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 lg:mb-10">
               <div>
-                <h3 className="font-black text-slate-900 text-xl tracking-tight">Service Volume</h3>
-                <p className="text-slate-500 text-sm font-medium">Weekly comparison</p>
+                <h3 className="font-black text-slate-900 text-lg lg:text-xl tracking-tight">Service Volume</h3>
+                <p className="text-slate-500 text-xs lg:text-sm font-medium">Weekly comparison</p>
               </div>
-              <select className="bg-slate-50 border border-slate-200 rounded-2xl text-xs px-4 py-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-100">
+              <select className="bg-slate-50 border border-slate-200 rounded-xl text-[10px] lg:text-xs px-3 lg:px-4 py-2 lg:py-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-100">
                 <option>Last 7 Days</option>
                 <option>Last 30 Days</option>
               </select>
             </div>
-            <div className="h-[300px]">
+            <div className="h-[250px] lg:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={WEEKLY_DATA}>
                   <CartesianGrid strokeDasharray="8 8" vertical={false} stroke="#f1f5f9" />
@@ -260,35 +265,35 @@ export default function AdminDashboard() {
                     dataKey="name" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 700 }} 
+                    tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} 
                   />
                   <YAxis 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 700 }} 
+                    tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} 
                   />
                   <Tooltip 
                     cursor={{ fill: '#f8fafc' }}
-                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '16px' }}
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
                   />
-                  <Bar dataKey="tickets" fill="#2563eb" radius={[12, 12, 4, 4]} barSize={45} />
+                  <Bar dataKey="tickets" fill="#2563eb" radius={[8, 8, 2, 2]} barSize={30} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Status Breakdown */}
-          <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm flex flex-col">
-            <h3 className="font-black text-slate-900 text-xl tracking-tight mb-2">Health Matrix</h3>
-            <p className="text-slate-500 text-sm font-medium mb-8">System status overview</p>
+          <div className="bg-white lg:p-10 p-6 lg:rounded-[48px] rounded-3xl border border-slate-100 shadow-sm flex flex-col">
+            <h3 className="font-black text-slate-900 text-lg lg:text-xl tracking-tight mb-1 lg:mb-2 text-white">Health Matrix</h3>
+            <p className="text-slate-500 text-xs lg:text-sm font-medium mb-6 lg:mb-8">System status overview</p>
             
-            <div className="h-[240px] relative mb-8">
+            <div className="h-[200px] lg:h-[240px] relative mb-6 lg:mb-8">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={STATUS_CHART_DATA}
-                    innerRadius={70}
-                    outerRadius={100}
+                    innerRadius={60}
+                    outerRadius={85}
                     paddingAngle={8}
                     dataKey="value"
                   >
@@ -299,22 +304,22 @@ export default function AdminDashboard() {
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
-                <p className="text-4xl font-black text-slate-900 tabular-nums">{tickets.length}</p>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tickets</p>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+                <p className="text-2xl lg:text-4xl font-black text-slate-900 tabular-nums">{tickets.length}</p>
+                <p className="text-[8px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</p>
               </div>
             </div>
             
-            <div className="space-y-4 flex-1">
+            <div className="space-y-3 lg:space-y-4 flex-1">
               {STATUS_CHART_DATA.map((item) => (
-                <div key={item.name} className="flex items-center justify-between p-3 bg-slate-50/50 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: item.color }} />
-                    <p className="text-xs font-bold text-slate-700">{item.name}</p>
+                <div key={item.name} className="flex items-center justify-between p-2.5 lg:p-3 bg-slate-50/50 rounded-xl lg:rounded-2xl">
+                  <div className="flex items-center gap-2 lg:gap-3">
+                    <div className="w-2.5 lg:w-3.5 h-2.5 lg:h-3.5 rounded-full shadow-sm" style={{ backgroundColor: item.color }} />
+                    <p className="text-[10px] lg:text-xs font-bold text-slate-700">{item.name}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-black text-slate-900 tabular-nums">{item.value}</p>
-                    <p className="text-[10px] font-bold text-slate-400">({Math.round(item.value / (tickets.length || 1) * 100)}%)</p>
+                  <div className="flex items-center gap-1.5 lg:gap-2">
+                    <p className="text-[10px] lg:text-xs font-black text-slate-900 tabular-nums">{item.value}</p>
+                    <p className="text-[8px] lg:text-[10px] font-bold text-slate-400">({Math.round(item.value / (tickets.length || 1) * 100)}%)</p>
                   </div>
                 </div>
               ))}
@@ -323,15 +328,18 @@ export default function AdminDashboard() {
         </div>
 
         {/* Live System Log / Recent Tickets */}
-        <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm space-y-8">
+        <div className="bg-white lg:p-10 p-6 lg:rounded-[48px] rounded-3xl border border-slate-100 shadow-sm space-y-6 lg:space-y-8">
           <div className="flex justify-between items-center">
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">Live Operations Log</h3>
-            <button className="text-blue-600 text-xs font-black uppercase tracking-widest flex items-center gap-1.5 hover:gap-3 transition-all">
-              View All History <ChevronRight size={16} />
+            <h3 className="text-lg lg:text-xl font-black text-slate-900 tracking-tight">Live Operations Log</h3>
+            <button 
+              onClick={() => setActiveTab('Tickets')}
+              className="text-blue-600 text-[10px] lg:text-xs font-black uppercase tracking-widest flex items-center gap-1.5 hover:gap-3 transition-all"
+            >
+              View All <ChevronRight size={14} className="lg:size-4" />
             </button>
           </div>
           
-          <div className="overflow-x-auto">
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-slate-100">
@@ -370,16 +378,38 @@ export default function AdminDashboard() {
                     <td className="py-5 px-4 text-right font-black text-xs text-slate-400 tracking-tighter">{formatDate(t.created_at)}</td>
                   </tr>
                 ))}
-                {tickets.length === 0 && !loading && (
-                  <tr>
-                    <td colSpan={5} className="py-12 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">
-                      No active logs found
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Log View */}
+          <div className="lg:hidden space-y-3">
+            {tickets.slice(0, 5).map((t) => (
+              <div key={t.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
+                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex-shrink-0 flex items-center justify-center">
+                  <TicketIcon size={18} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start mb-0.5">
+                    <p className="font-bold text-slate-900 text-xs truncate uppercase tracking-tight">{t.ac_type}</p>
+                    <span className="text-[8px] font-black text-slate-400 tabular-nums">{formatDate(t.created_at)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-[10px] text-slate-500 font-bold">{getUserName(t.customer_id)}</p>
+                    <span className={cn("text-[8px] font-black uppercase px-1.5 py-0.5 rounded border", getStatusColor(t.status))}>
+                      {t.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {tickets.length === 0 && !loading && (
+            <div className="py-12 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">
+              No active logs found
+            </div>
+          )}
         </div>
       </>
     )}
@@ -413,8 +443,8 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white lg:rounded-[40px] rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
@@ -512,17 +542,90 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ))}
-                {tickets.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-8 py-20 text-center">
-                      <TicketIcon size={40} className="mx-auto text-slate-200 mb-4" />
-                      <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">No tickets found</p>
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Ticket View */}
+          <div className="lg:hidden divide-y divide-slate-100">
+            {tickets
+              .filter(t => {
+                const matchesSearch = t.complaint?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                    t.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    getUserName(t.customer_id).toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesFilter = filterStatus === 'all' || 
+                                     (filterStatus === 'In Progress' ? !['New', 'Completed', 'Cancelled'].includes(t.status) : t.status === filterStatus);
+                return matchesSearch && matchesFilter;
+              })
+              .map((t) => (
+                <div key={t.id} className="p-4 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                        <TicketIcon size={20} />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">{t.ac_type}</p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t.priority} Priority</p>
+                      </div>
+                    </div>
+                    <span className={cn("px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border", getStatusColor(t.status))}>
+                      {t.status}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Customer</p>
+                      <p className="font-bold text-slate-700 text-xs">{getUserName(t.customer_id)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Created</p>
+                      <p className="font-bold text-slate-500 text-xs">{formatDate(t.created_at)}</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 p-3 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                       <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Assignee:</p>
+                       <span className="text-xs font-bold text-slate-600">{getUserName(t.assigned_employee)}</span>
+                    </div>
+                    <button 
+                      onClick={() => setAssigningTicketId(assigningTicketId === t.id ? null : t.id)}
+                      className="p-1.5 bg-white shadow-sm border border-slate-200 rounded-lg text-blue-600"
+                    >
+                      <UserPlus size={14} />
+                    </button>
+                  </div>
+
+                  {assigningTicketId === t.id && (
+                    <div className="pt-2 animate-in slide-in-from-top-2 duration-200">
+                      <select
+                        className="w-full bg-blue-50 border border-blue-200 rounded-xl text-xs px-4 py-3 font-bold outline-none ring-2 ring-blue-100"
+                        onChange={(e) => handleAssign(t.id, e.target.value)}
+                        defaultValue=""
+                        disabled={isAssigning}
+                      >
+                        <option value="" disabled>Select technician...</option>
+                        {profiles
+                          .filter(p => (p.role === 'employee' || p.is_admin) && p.approval_status === 'approved' && p.active)
+                          .map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))
+                        }
+                      </select>
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+
+          {tickets.length === 0 && (
+            <div className="px-8 py-20 text-center">
+              <TicketIcon size={40} className="mx-auto text-slate-200 mb-4" />
+              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">No tickets found</p>
+            </div>
+          )}
         </div>
       </div>
     )}
@@ -558,25 +661,25 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden">
-          <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-white lg:rounded-[40px] rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="p-6 lg:p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h3 className="font-black text-slate-900 text-xl tracking-tight">User Directory</h3>
-              <p className="text-sm text-slate-500 font-medium">Manage access and account status</p>
+              <h3 className="font-black text-slate-900 text-lg lg:text-xl tracking-tight">User Directory</h3>
+              <p className="text-xs lg:text-sm text-slate-500 font-medium">Manage access and account status</p>
             </div>
-            <div className="flex gap-4">
-              <div className="px-4 py-2 bg-amber-50 rounded-xl text-xs font-black uppercase text-amber-600 flex items-center gap-2">
-                <Clock size={14} />
+            <div className="flex gap-2 lg:gap-4 overflow-x-auto no-scrollbar">
+              <div className="px-3 lg:px-4 py-1.5 lg:py-2 bg-amber-50 rounded-xl text-[10px] lg:text-xs font-black uppercase text-amber-600 flex items-center gap-1.5 lg:gap-2 whitespace-nowrap">
+                <Clock size={12} />
                 {pendingUsersCount} Pending
               </div>
-              <div className="px-4 py-2 bg-emerald-50 rounded-xl text-xs font-black uppercase text-emerald-600 flex items-center gap-2">
-                <CheckCircle size={14} />
+              <div className="px-3 lg:px-4 py-1.5 lg:py-2 bg-emerald-50 rounded-xl text-[10px] lg:text-xs font-black uppercase text-emerald-600 flex items-center gap-1.5 lg:gap-2 whitespace-nowrap">
+                <CheckCircle size={12} />
                 {approvedUsersCount} Active
               </div>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
@@ -697,23 +800,133 @@ export default function AdminDashboard() {
                     </td>
                   </tr>
                 ))}
-                {filteredProfiles.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="px-8 py-16 text-center">
-                      <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                        <Users size={32} />
-                      </div>
-                      <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">No users found matching criteria</p>
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
+
+          {/* Mobile User View */}
+          <div className="lg:hidden divide-y divide-slate-100">
+             {filteredProfiles.map((p) => (
+               <div key={p.id} className="p-4 space-y-4">
+                 <div className="flex justify-between items-start">
+                   <div className="flex items-center gap-3">
+                     <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center font-black text-base shadow-sm border border-white",
+                        p.approval_status === 'approved' ? "bg-blue-100 text-blue-600" : 
+                        p.approval_status === 'rejected' ? "bg-red-100 text-red-600" :
+                        "bg-amber-100 text-amber-600"
+                      )}>
+                        {p.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm tracking-tight">{p.name}</p>
+                        <p className="text-[10px] text-slate-500 font-bold">{p.mobile_no} • {p.role}</p>
+                      </div>
+                   </div>
+                   <div className="flex flex-col items-end gap-1">
+                     <span className={cn(
+                        "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border",
+                        p.approval_status === 'approved' ? "text-emerald-600 border-emerald-100 bg-emerald-50" : 
+                        p.approval_status === 'pending' ? "text-amber-600 border-amber-100 bg-amber-50" :
+                        "text-red-500 border-red-100 bg-red-50"
+                      )}>
+                        {p.approval_status}
+                      </span>
+                      <div className="flex gap-1">
+                        {p.is_admin && <span className="bg-purple-50 text-purple-600 border border-purple-100 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Admin</span>}
+                        {p.active && <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Live</span>}
+                      </div>
+                   </div>
+                 </div>
+
+                 <div className="flex gap-2">
+                   {p.approval_status === 'pending' ? (
+                     <>
+                        <button
+                          disabled={isUpdatingProfile === p.id}
+                          onClick={() => handleUpdateStatus(p.id, { approval_status: 'approved', active: true })}
+                          className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 flex items-center justify-center gap-1.5"
+                        >
+                          <UserCheck size={14} /> Approve
+                        </button>
+                        <button
+                          disabled={isUpdatingProfile === p.id}
+                          onClick={() => handleUpdateStatus(p.id, { approval_status: 'rejected', active: false })}
+                          className="flex-1 py-2.5 bg-red-50 text-red-600 border border-red-100 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5"
+                        >
+                          <UserX size={14} /> Reject
+                        </button>
+                     </>
+                   ) : (
+                     <div className="flex-1 flex gap-2">
+                       <button
+                          onClick={() => handleUpdateStatus(p.id, { active: !p.active })}
+                          className="flex-1 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-500"
+                        >
+                          {p.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleUpdateStatus(p.id, { is_admin: !p.is_admin })}
+                          className="flex-1 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-500"
+                        >
+                          {p.is_admin ? 'Demote' : 'Make Admin'}
+                        </button>
+                        <button
+                          onClick={() => handleUpdateStatus(p.id, { approval_status: p.approval_status === 'disabled' ? 'approved' : 'disabled', active: p.approval_status === 'disabled' })}
+                          className={cn(
+                            "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest",
+                            p.approval_status === 'disabled' ? "bg-blue-600 text-white" : "bg-red-50 text-red-500 border border-red-100"
+                          )}
+                        >
+                          {p.approval_status === 'disabled' ? 'Enable' : 'Disable'}
+                        </button>
+                     </div>
+                   )}
+                 </div>
+               </div>
+             ))}
+          </div>
+
+          {filteredProfiles.length === 0 && (
+            <div className="px-8 py-16 text-center">
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                <Users size={32} />
+              </div>
+              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">No users found matching criteria</p>
+            </div>
+          )}
         </div>
       </div>
     )}
   </main>
+      {/* Mobile Bottom Nav */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 h-16 px-2 flex items-center justify-around z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+        {[
+          { id: 'Overview', icon: Activity, label: 'Ops' },
+          { id: 'Tickets', icon: TicketIcon, label: 'Tickets' },
+          { id: 'Users', icon: Users, label: 'Users' },
+          { id: 'Analytics', icon: TrendingUp, label: 'Stats' }
+        ].map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            className={cn(
+              "flex flex-col items-center gap-1 min-w-[70px] relative transition-all active:scale-95",
+              activeTab === item.id ? "text-blue-600" : "text-slate-400"
+            )}
+          >
+            <item.icon size={20} className={cn("transition-transform", activeTab === item.id ? "scale-110" : "")} />
+            <span className="text-[8px] font-black uppercase tracking-widest">{item.label}</span>
+            {activeTab === item.id && (
+              <motion.div 
+                layoutId="mobileTab" 
+                className="absolute -top-[16px] w-8 h-1 bg-blue-600 rounded-full" 
+                transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+              />
+            )}
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }

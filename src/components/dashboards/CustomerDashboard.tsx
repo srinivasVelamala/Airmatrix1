@@ -90,35 +90,35 @@ export default function CustomerDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col pb-24">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-30">
+      <header className="bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-30">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-bold text-slate-900 line-clamp-1">AIRMATRIX</h1>
-            <p className="text-xs text-slate-500 font-medium truncate max-w-[200px]">Hello, {profile?.name}</p>
+            <h1 className="text-lg font-black text-slate-900 tracking-tight">AIRMATRIX</h1>
+            <p className="text-[10px] text-slate-500 font-bold">Hello, {profile?.name}</p>
           </div>
-          <button onClick={() => signOut()} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
-            <LogOut size={20} />
+          <button onClick={() => signOut()} className="p-2.5 bg-slate-50 rounded-xl text-slate-400 hover:text-red-500 active:scale-90 transition-all flex-shrink-0">
+            <LogOut size={18} />
           </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 space-y-6">
+      <main className="flex-1 p-4 space-y-4 lg:p-6 lg:space-y-6">
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-blue-600 p-4 rounded-3xl text-white">
-            <div className="bg-white/20 w-10 h-10 rounded-xl flex items-center justify-center mb-2">
-              <Clock size={16} />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg shadow-blue-100">
+            <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+              <Clock size={14} />
             </div>
-            <p className="text-[10px] text-blue-100 uppercase font-extrabold tracking-tighter">Active</p>
-            <p className="text-xl font-bold">{tickets.filter(t => !['Completed', 'Cancelled'].includes(t.status)).length} Tickets</p>
+            <p className="text-[8px] text-blue-100 uppercase font-black tracking-widest">Active</p>
+            <p className="text-lg font-black">{tickets.filter(t => !['Completed', 'Cancelled'].includes(t.status)).length}</p>
           </div>
-          <div className="bg-slate-900 p-4 rounded-3xl text-white">
-            <div className="bg-white/10 w-10 h-10 rounded-xl flex items-center justify-center mb-2">
-              <CheckCircle2 size={16} />
+          <div className="bg-slate-900 p-4 rounded-2xl text-white shadow-lg shadow-slate-100">
+            <div className="bg-white/10 w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+              <CheckCircle2 size={14} />
             </div>
-            <p className="text-[10px] text-slate-400 uppercase font-extrabold tracking-tighter">Resolved</p>
-            <p className="text-xl font-bold">{tickets.filter(t => t.status === 'Completed').length}</p>
+            <p className="text-[8px] text-slate-400 uppercase font-black tracking-widest">Resolved</p>
+            <p className="text-lg font-black">{tickets.filter(t => t.status === 'Completed').length}</p>
           </div>
         </div>
 
@@ -201,28 +201,28 @@ export default function CustomerDashboard() {
       {/* FAB */}
       <button 
         onClick={() => setIsNewTicketOpen(true)}
-        className="fixed bottom-28 right-6 w-16 h-16 bg-blue-600 text-white rounded-3xl shadow-xl shadow-blue-200 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40"
+        className="fixed bottom-24 right-4 w-14 h-14 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-200 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40"
       >
-        <Plus size={32} />
+        <Plus size={28} />
       </button>
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 h-20 px-8 flex items-center justify-between z-40">
-        <button className="flex flex-col items-center gap-1.5 text-blue-600">
-          <TicketIcon size={22} />
-          <span className="text-[10px] font-extrabold uppercase tracking-widest">Tickets</span>
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 h-16 px-6 flex items-center justify-between z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+        <button className="flex flex-col items-center gap-1 text-blue-600">
+          <TicketIcon size={20} />
+          <span className="text-[8px] font-black uppercase tracking-widest">Tickets</span>
         </button>
-        <button className="flex flex-col items-center gap-1.5 text-slate-400 hover:text-slate-600 transition-colors">
-          <History size={22} />
-          <span className="text-[10px] font-extrabold uppercase tracking-widest">History</span>
+        <button className="flex flex-col items-center gap-1 text-slate-400">
+          <History size={20} />
+          <span className="text-[8px] font-black uppercase tracking-widest">History</span>
         </button>
-        <button className="flex flex-col items-center gap-1.5 text-slate-400 hover:text-slate-600 transition-colors">
-          <MapPin size={22} />
-          <span className="text-[10px] font-extrabold uppercase tracking-widest">Store</span>
+        <button className="flex flex-col items-center gap-1 text-slate-400">
+          <MapPin size={20} />
+          <span className="text-[8px] font-black uppercase tracking-widest">Store</span>
         </button>
-        <button className="flex flex-col items-center gap-1.5 text-slate-400 hover:text-slate-600 transition-colors">
-          <Settings size={22} />
-          <span className="text-[10px] font-extrabold uppercase tracking-widest">Settings</span>
+        <button className="flex flex-col items-center gap-1 text-slate-400">
+          <Settings size={20} />
+          <span className="text-[8px] font-black uppercase tracking-widest">Settings</span>
         </button>
       </nav>
 

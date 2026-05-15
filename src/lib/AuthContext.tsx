@@ -110,10 +110,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (error) throw error;
-      if (!userData) throw new Error('User does not exist');
+      
+      if (!userData) {
+        // Check if there are ANY users. If not, suggest signing up.
+        const { count } = await supabase.from('users').select('*', { count: 'exact', head: true });
+        if (count === 0) {
+          throw new Error('Database is empty. Please "Sign Up" to create the first Admin account.');
+        }
+        throw new Error('User does not exist. Please check mobile number or Sign Up.');
+      }
 
       const isValid = await bcrypt.compare(password, userData.password_hash);
-      if (!isValid) throw new Error('Incorrect password');
+      if (!isValid) throw new Error('Incorrect password. Please try again.');
 
       // Check approval status
       if (userData.approval_status === 'pending') {
@@ -139,6 +147,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser({ id: userData.id });
     } catch (err: any) {
       console.error('SignIn Error:', err);
+      // Re-throw with a more user-friendly message if it's a generic supabase error
+      if (err.message === 'Failed to fetch') {
+        throw new Error('Cannot connect to database. Check your internet connection.');
+      }
       throw err;
     }
   }
@@ -157,7 +169,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('mobile_no', mobile_no)
         .maybeSingle();
 
-      if (existingUser) throw new Error('Mobile number already registered');
+      if (existingUser) throw new Error('Mobile number already registered. Please Login.');
+
+      // Check if this is the first user to make them admin
+      const { count } = await supabase.from('users').select('*', { count: 'exact', head: true });
+      const isFirstUser = count === 0;
 
       const password_hash = await bcrypt.hash(password, 10);
 
@@ -167,17 +183,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name,
           mobile_no,
           password_hash,
-          role,
-          is_admin: false,
-          approval_status: 'pending',
-          active: false
+          role: isFirstUser ? 'admin' : role,
+          is_admin: isFirstUser,
+          approval_status: isFirstUser ? 'approved' : 'pending',
+          active: isFirstUser
         }])
         .select()
         .single();
 
       if (error) throw error;
       
-      // We don't sign in the user immediately because they need approval
+      // If it's the first user, we can log them in immediately
+      if (isFirstUser && newUser) {
+        localStorage.setItem('matrix_user_id', newUser.id);
+        setProfile(newUser);
+        setUser({ id: newUser.id });
+        toast.success('Admin account created and approved automatically!');
+        return;
+      }
+      
+      // We don't sign in other users immediately because they need approval
       return;
     } catch (err: any) {
       console.error('SignUp Error:', err);

@@ -39,10 +39,14 @@ export default function LoginScreen() {
     setIsPending(true);
     try {
       await signInWithPassword(phone, password);
-      toast.success('Logging in...');
+      toast.success('Access granted');
     } catch (error: any) {
       console.error('Login Error:', error);
-      toast.error(error.message || 'Login failed');
+      const msg = error.message || 'Login failed';
+      toast.error(msg);
+      if (msg.includes('Sign Up')) {
+        setMode('signup');
+      }
     } finally {
       setIsPending(false);
     }
@@ -60,8 +64,8 @@ export default function LoginScreen() {
       toast.error('Mobile number must be exactly 10 digits');
       return;
     }
-    if (!/^\d{6}$/.test(password)) {
-      toast.error('Password must be exactly 6 digits');
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters');
       return;
     }
     if (password !== confirmPassword) {
@@ -134,35 +138,35 @@ export default function LoginScreen() {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-white rounded-[48px] shadow-2xl shadow-slate-200 overflow-hidden"
+        className="w-full max-w-md bg-white rounded-[32px] lg:rounded-[48px] shadow-2xl shadow-slate-200 overflow-hidden"
       >
-        <div className="bg-blue-600 p-10 text-white text-center relative overflow-hidden">
+        <div className="bg-blue-600 p-6 lg:p-10 text-white text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/20 rounded-full -ml-12 -mb-12 blur-xl" />
           
-          <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md shadow-xl">
-            <ShieldCheck size={40} />
+          <div className="w-16 h-16 lg:w-20 lg:h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-4 lg:mb-6 backdrop-blur-md shadow-xl">
+            <ShieldCheck size={32} className="lg:size-[40px]" />
           </div>
-          <h1 className="text-4xl font-black tracking-tighter mb-2">AIRMATRIX</h1>
-          <p className="text-blue-100 uppercase tracking-[0.3em] text-[10px] font-black opacity-80 font-inter">Service Excellence</p>
+          <h1 className="text-3xl lg:text-4xl font-black tracking-tighter mb-1 lg:mb-2 text-white">AIRMATRIX</h1>
+          <p className="text-blue-100 uppercase tracking-[0.2em] text-[8px] lg:text-[10px] font-black opacity-80 font-inter">Service Excellence</p>
         </div>
 
-        <div className="p-10 space-y-8">
+        <div className="p-6 lg:p-10 space-y-6 lg:space-y-8">
           {/* Connection Status */}
-          <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+          <div className="flex items-center justify-between p-3 lg:p-4 bg-slate-50 border border-slate-100 rounded-2xl">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-xl ${
                 connectionStatus === 'connected' ? 'bg-green-100 text-green-600' :
                 connectionStatus === 'error' ? 'bg-red-100 text-red-600' :
                 'bg-amber-100 text-amber-600'
               }`}>
-                {connectionStatus === 'connected' ? <CheckCircle2 size={18} /> :
-                 connectionStatus === 'error' ? <XCircle size={18} /> :
-                 <Activity size={18} />}
+                {connectionStatus === 'connected' ? <CheckCircle2 size={16} /> :
+                 connectionStatus === 'error' ? <XCircle size={16} /> :
+                 <Activity size={16} />}
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">System Link</p>
-                <p className="text-sm font-bold text-slate-700">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">System Link</p>
+                <p className="text-[11px] lg:text-sm font-bold text-slate-700">
                   {connectionStatus === 'connected' ? 'Online' :
                    connectionStatus === 'error' ? 'Offline' : 'Demo Active'}
                 </p>
@@ -170,17 +174,17 @@ export default function LoginScreen() {
             </div>
             <button 
               onClick={() => checkConnection()}
-              className="p-2.5 bg-white shadow-sm border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors text-slate-400"
+              className="p-2 bg-white shadow-sm border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors text-slate-400"
             >
-              <RefreshCw size={14} />
+              <RefreshCw size={12} />
             </button>
           </div>
 
-          <div className="flex bg-slate-100 p-1.5 rounded-2xl">
+          <div className="flex bg-slate-100 p-1 rounded-xl lg:rounded-2xl">
             <button 
               onClick={() => setMode('login')}
               className={cn(
-                "flex-1 py-3 rounded-[14px] text-xs font-black uppercase tracking-widest transition-all",
+                "flex-1 py-2.5 lg:py-3 rounded-[10px] lg:rounded-[14px] text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all",
                 mode === 'login' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
               )}
             >
@@ -189,7 +193,7 @@ export default function LoginScreen() {
             <button 
               onClick={() => setMode('signup')}
               className={cn(
-                "flex-1 py-3 rounded-[14px] text-xs font-black uppercase tracking-widest transition-all",
+                "flex-1 py-2.5 lg:py-3 rounded-[10px] lg:rounded-[14px] text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all",
                 mode === 'signup' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
               )}
             >
@@ -204,17 +208,17 @@ export default function LoginScreen() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: mode === 'signup' ? -20 : 20 }}
               onSubmit={mode === 'login' ? handleLogin : handleSignUp}
-              className="space-y-5"
+              className="space-y-4 lg:space-y-5"
             >
               {mode === 'signup' && (
                 <>
                   <div className="relative group">
-                    <User className="absolute left-4 top-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
                     <input
                       type="text"
                       required
                       placeholder="Full Name"
-                      className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400 outline-none transition-all font-medium"
+                      className="w-full pl-12 pr-6 py-3.5 lg:py-4 bg-slate-50 border border-slate-100 rounded-xl lg:rounded-2xl focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400 outline-none transition-all font-medium text-sm"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                     />
@@ -225,7 +229,7 @@ export default function LoginScreen() {
                       type="button"
                       onClick={() => setRole('customer')}
                       className={cn(
-                        "flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                        "flex-1 py-2 rounded-lg text-[9px] lg:text-[10px] font-black uppercase tracking-widest transition-all",
                         role === 'customer' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400"
                       )}
                     >
@@ -235,7 +239,7 @@ export default function LoginScreen() {
                       type="button"
                       onClick={() => setRole('employee')}
                       className={cn(
-                        "flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                        "flex-1 py-2 rounded-lg text-[9px] lg:text-[10px] font-black uppercase tracking-widest transition-all",
                         role === 'employee' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400"
                       )}
                     >
@@ -246,66 +250,66 @@ export default function LoginScreen() {
               )}
 
               <div className="relative group">
-                <Phone className="absolute left-4 top-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <input
                   type="tel"
                   required
-                  placeholder="Mobile Number"
-                  className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400 outline-none transition-all font-medium"
+                  placeholder="Mobile"
+                  className="w-full pl-12 pr-6 py-3.5 lg:py-4 bg-slate-50 border border-slate-100 rounded-xl lg:rounded-2xl focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400 outline-none transition-all font-medium text-sm"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 />
               </div>
 
               <div className="relative group">
-                <Lock className="absolute left-4 top-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <input
                   type="password"
                   required
-                  placeholder="Password (6-digit PIN)"
-                  className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400 outline-none transition-all font-medium"
+                  placeholder="Password"
+                  className="w-full pl-12 pr-6 py-3.5 lg:py-4 bg-slate-50 border border-slate-100 rounded-xl lg:rounded-2xl focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400 outline-none transition-all font-medium text-sm"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
 
               {mode === 'signup' && (
                 <div className="relative group">
-                  <ShieldCheck className="absolute left-4 top-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
+                  <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
                   <input
                     type="password"
                     required
-                    placeholder="Confirm PIN"
-                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400 outline-none transition-all font-medium"
+                    placeholder="Confirm Password"
+                    className="w-full pl-12 pr-6 py-3.5 lg:py-4 bg-slate-50 border border-slate-100 rounded-xl lg:rounded-2xl focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400 outline-none transition-all font-medium text-sm"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                   />
                 </div>
               )}
 
               <button
                 disabled={isPending}
-                className="w-full bg-slate-900 text-white py-5 rounded-[24px] font-black text-sm uppercase tracking-[0.2em] shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                className="w-full bg-slate-900 text-white py-4 lg:py-5 rounded-xl lg:rounded-[24px] font-black text-xs lg:text-sm uppercase tracking-[0.2em] shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 {isPending ? (
-                  <RefreshCw className="animate-spin" size={20} />
+                  <RefreshCw className="animate-spin" size={18} />
                 ) : (
                   <>
-                    {mode === 'login' ? 'Login' : 'Create Account'}
-                    <ArrowRight size={18} />
+                    {mode === 'login' ? 'Login' : 'Join'}
+                    <ArrowRight size={16} />
                   </>
                 )}
               </button>
             </motion.form>
           </AnimatePresence>
 
-          <div className="pt-6 border-t border-slate-50">
+          <div className="pt-4 lg:pt-6 border-t border-slate-50">
             <div className="flex justify-center gap-4">
               <button 
                 onClick={() => setMockProfile('admin')}
-                className="text-[10px] font-black text-slate-300 uppercase tracking-widest hover:text-slate-900 transition-colors border border-dashed border-slate-200 px-3 py-1 rounded-lg"
+                className="text-[9px] font-black text-slate-300 uppercase tracking-widest hover:text-slate-900 transition-colors border border-dashed border-slate-200 px-3 py-1.5 rounded-lg"
               >
-                Demo Admin
+                Demo
               </button>
             </div>
           </div>
