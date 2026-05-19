@@ -193,9 +193,9 @@ export async function assignTicket(ticketId: string, employeeId: string, assigne
 export async function getPurchaseHistory(customerId: string) {
   if (isMockMode) {
     return [
-      { id: 'p1', customer_id: customerId, item_name: 'AC Service - Annual Maintenance', item_category: 'Service', amount: 2500, currency: 'INR', status: 'completed', payment_method: 'Credit Card', created_at: new Date(Date.now() - 86400000 * 5).toISOString() },
-      { id: 'p2', customer_id: customerId, item_name: 'Compressor Capacitor Replacement', item_category: 'Parts', amount: 1200, currency: 'INR', status: 'completed', payment_method: 'UPI', created_at: new Date(Date.now() - 86400000 * 15).toISOString() },
-      { id: 'p3', customer_id: customerId, item_name: 'Gas Refilling (R32)', item_category: 'Service', amount: 3500, currency: 'INR', status: 'completed', payment_method: 'Cash', created_at: new Date(Date.now() - 86400000 * 45).toISOString() },
+      { id: 'p1', customer_id: customerId, item_name: 'Split AC Service (Annual)', item_category: 'Service', amount: 2500, currency: 'INR', status: 'completed', payment_method: 'Credit Card', created_at: new Date(Date.now() - 86400000 * 5).toISOString() },
+      { id: 'p2', customer_id: customerId, item_name: 'Eco-Cooler Split AC 1.5T', item_category: 'Store', amount: 34999, currency: 'INR', status: 'completed', payment_method: 'UPI', created_at: new Date(Date.now() - 86400000 * 15).toISOString() },
+      { id: 'p3', customer_id: customerId, item_name: 'Premium HEPA Air Filter', item_category: 'Store', amount: 1200, currency: 'INR', status: 'completed', payment_method: 'Cash', created_at: new Date(Date.now() - 86400000 * 45).toISOString() },
     ] as Purchase[];
   }
 
@@ -274,7 +274,11 @@ export async function deleteProduct(id: string) {
   if (error) throw error;
 }
 
-export async function createOrder(order: { customer_id: string; total_amount: number; items: { product_id: string; quantity: number; unit_price: number }[] }) {
+export async function createOrder(order: { 
+  customer_id: string; 
+  total_amount: number; 
+  items: { product_id: string; quantity: number; unit_price: number; name: string }[] 
+}) {
   if (isMockMode) {
     return { id: Math.random().toString(), ...order, status: 'pending', created_at: new Date().toISOString() };
   }
@@ -307,18 +311,15 @@ export async function createOrder(order: { customer_id: string; total_amount: nu
   if (itemsError) throw itemsError;
 
   // 3. Update purchases table for history view (flattened records)
-  // We'll add one entry per product in the order for the legacy history view
   const purchaseRecords = order.items.map(item => ({
     customer_id: order.customer_id,
     amount: item.unit_price * item.quantity,
     item_category: 'Store',
-    item_name: `Purchase: ${item.quantity}x Item`, // Ideally we'd join but this is a quick summary
+    item_name: item.name,
     status: 'completed',
     payment_method: 'Online Payment'
   }));
 
-  // To get product names, normally we'd join, but we can just use the product objects if we had them.
-  // For now, let's just insert summary records.
   await supabase.from('purchases').insert(purchaseRecords);
 
   return orderData;

@@ -248,18 +248,35 @@ export default function AdminDashboard() {
             {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
             {[
-                { label: 'Pending Requests', value: pendingCount, icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50' },
+                { label: 'Pending Tickets', value: pendingCount, icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50' },
                 { label: 'Active Users', value: profiles.filter(p => p.active).length, icon: Users, color: 'text-amber-600', bg: 'bg-amber-50' },
                 { label: 'Pending Approvals', value: pendingUsersCount, icon: UserX, color: 'text-red-500', bg: 'bg-red-50' },
-                { label: 'Completed Jobs', value: completedCount, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                { label: 'Completed Tickets', value: completedCount, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
               ].map((stat, i) => (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.1 }}
                   key={i}
-                  className="bg-white p-4 lg:p-7 rounded-2xl lg:rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 transition-all group active:scale-95"
-                  onClick={() => stat.label === 'Pending Approvals' && setActiveTab('Users')}
+                  className="bg-white p-4 lg:p-7 rounded-2xl lg:rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 transition-all group active:scale-95 cursor-pointer"
+                  onClick={() => {
+                    if (stat.label === 'Pending Approvals') {
+                      setActiveTab('Users');
+                      setFilterStatus('pending');
+                    }
+                    if (stat.label === 'Pending Tickets') {
+                      setActiveTab('Tickets');
+                      setFilterStatus('New');
+                    }
+                    if (stat.label === 'Active Users') {
+                      setActiveTab('Users');
+                      setFilterStatus('approved');
+                    }
+                    if (stat.label === 'Completed Tickets') {
+                      setActiveTab('Tickets');
+                      setFilterStatus('Completed');
+                    }
+                  }}
                 >
                   <div className="flex justify-between items-start mb-3 lg:mb-6">
                     <div className={cn("p-2 lg:p-4 rounded-xl lg:rounded-3xl group-hover:scale-110 transition-transform", stat.bg)}>

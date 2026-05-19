@@ -87,8 +87,8 @@ export default function PurchaseHistory({ customerId }: PurchaseHistoryProps) {
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center mb-0.5">
-                    <h4 className="font-bold text-slate-900 text-xs truncate pr-2">
-                      {purchase.item_name}
+                    <h4 className="font-black text-slate-900 text-sm group-hover:text-blue-600 transition-colors flex items-center gap-2">
+                       <span className="truncate">{purchase.item_name && !purchase.item_name.includes('Purchase: 1x Item') ? purchase.item_name : 'Product Purchase'}</span>
                     </h4>
                     <p className="text-[10px] font-black text-slate-900">
                       ₹{purchase.amount.toLocaleString()}

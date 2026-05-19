@@ -150,7 +150,8 @@ export default function CustomerDashboard() {
         items: cart.map(item => ({
           product_id: item.product.id,
           quantity: item.quantity,
-          unit_price: item.product.price
+          unit_price: item.product.price,
+          name: item.product.name
         }))
       });
 

@@ -103,6 +103,19 @@ export default function EmployeeDashboard() {
       setIsUpdating(true);
       await updateTicketStatus(selectedTicket.id, status, undefined, profile.id);
       
+      // If completed, add to purchase history for the customer
+      if (status === 'Completed') {
+        const { supabase } = await import('../../lib/supabase');
+        await supabase.from('purchases').insert([{
+          customer_id: selectedTicket.customer_id,
+          item_name: `${selectedTicket.ac_type} Maintenance Service`,
+          item_category: 'Service',
+          amount: 2500, // Default service charge for now
+          payment_method: 'Cash/Online',
+          status: 'completed'
+        }]);
+      }
+      
       setTickets(prev => prev.map(t => 
         t.id === selectedTicket.id ? { ...t, status } : t
       ));
