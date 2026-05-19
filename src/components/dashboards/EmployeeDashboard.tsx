@@ -132,7 +132,7 @@ export default function EmployeeDashboard() {
             exit={{ opacity: 0 }}
             className="p-4 space-y-4 lg:p-6 lg:space-y-6"
           >
-            {/* Staff Header */}
+            {/* Employee Header */}
             <header className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-lg">

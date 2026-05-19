@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, isMockMode, type User, type UserRole } from './supabase';
 import bcrypt from 'bcryptjs';
+import { toast } from 'react-hot-toast';
 
 export type ConnectionStatus = 'checking' | 'connected' | 'error' | 'mock';
 
@@ -40,8 +41,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setConnectionStatus('checking');
     try {
-      const { data, error } = await supabase.from('users').select('count');
-      if (error && error.code !== 'PGRST116') throw error;
+      // Check both tables
+      const [{ error: e1 }, { error: e2 }] = await Promise.all([
+        supabase.from('customers').select('count', { count: 'exact', head: true }),
+        supabase.from('employees').select('count', { count: 'exact', head: true })
+      ]);
+      if (e1 && e1.code !== 'PGRST116') throw e1;
+      if (e2 && e2.code !== 'PGRST116') throw e2;
       setConnectionStatus('connected');
     } catch (err: any) {
       console.error('Connection health check failed:', err);
@@ -71,22 +77,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function fetchProfile(uid: string) {
     try {
-      const { data, error } = await supabase
-        .from('users')
+      // Try customers first
+      let { data: customer, error: e1 } = await supabase
+        .from('customers')
         .select('*')
         .eq('id', uid)
         .maybeSingle();
 
-      if (error) throw error;
+      if (e1) throw e1;
 
-      if (data) {
-        setProfile(data);
-        setUser({ id: data.id });
-      } else {
-        localStorage.removeItem('matrix_user_id');
-        setProfile(null);
-        setUser(null);
+      if (customer) {
+        setProfile({ ...customer, role: 'customer' });
+        setUser({ id: customer.id });
+        return;
       }
+
+      // Then try employees
+      let { data: employee, error: e2 } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('id', uid)
+        .maybeSingle();
+
+      if (e2) throw e2;
+
+      if (employee) {
+        setProfile({ ...employee, role: employee.is_admin ? 'admin' : 'employee' });
+        setUser({ id: employee.id });
+        return;
+      }
+
+      // If not found in either
+      localStorage.removeItem('matrix_user_id');
+      setProfile(null);
+      setUser(null);
     } catch (err: any) {
       console.error('Error fetching profile:', err);
       setAuthError(err.message);
@@ -103,18 +127,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const { data: userData, error } = await supabase
-        .from('users')
+      // Check customers table
+      const { data: customerData, error: e1 } = await supabase
+        .from('customers')
         .select('*')
         .eq('mobile_no', mobile_no)
         .maybeSingle();
 
-      if (error) throw error;
+      if (e1) throw e1;
       
+      let userData = customerData ? { ...customerData, role: 'customer' as UserRole } : null;
+
+      // If not in customers, check employees
       if (!userData) {
-        // Check if there are ANY users. If not, suggest signing up.
-        const { count } = await supabase.from('users').select('*', { count: 'exact', head: true });
-        if (count === 0) {
+        const { data: employeeData, error: e2 } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('mobile_no', mobile_no)
+          .maybeSingle();
+
+        if (e2) throw e2;
+        if (employeeData) {
+          userData = { ...employeeData, role: (employeeData.is_admin ? 'admin' : 'employee') as UserRole };
+        }
+      }
+
+      if (!userData) {
+        // Check if there are ANY users in both tables
+        const [ { count: c1 }, { count: c2 } ] = await Promise.all([
+          supabase.from('customers').select('*', { count: 'exact', head: true }),
+          supabase.from('employees').select('*', { count: 'exact', head: true })
+        ]);
+
+        if (c1 === 0 && c2 === 0) {
           throw new Error('Database is empty. Please "Sign Up" to create the first Admin account.');
         }
         throw new Error('User does not exist. Please check mobile number or Sign Up.');
@@ -125,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Check approval status
       if (userData.approval_status === 'pending') {
-        setProfile(userData); // Set profile so LoginScreen can show "Pending" state
+        setProfile(userData); 
         setUser({ id: userData.id });
         return;
       }
@@ -147,7 +192,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser({ id: userData.id });
     } catch (err: any) {
       console.error('SignIn Error:', err);
-      // Re-throw with a more user-friendly message if it's a generic supabase error
       if (err.message === 'Failed to fetch') {
         throw new Error('Cannot connect to database. Check your internet connection.');
       }
@@ -162,28 +206,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      // Check if user already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('mobile_no', mobile_no)
-        .maybeSingle();
+      // Check if user already exists in either table
+      const [ { data: exCustomer }, { data: exEmployee } ] = await Promise.all([
+        supabase.from('customers').select('id').eq('mobile_no', mobile_no).maybeSingle(),
+        supabase.from('employees').select('id').eq('mobile_no', mobile_no).maybeSingle()
+      ]);
 
-      if (existingUser) throw new Error('Mobile number already registered. Please Login.');
+      if (exCustomer || exEmployee) throw new Error('Mobile number already registered. Please Login.');
 
-      // Check if this is the first user to make them admin
-      const { count } = await supabase.from('users').select('*', { count: 'exact', head: true });
-      const isFirstUser = count === 0;
+      // Check if this is the first user overall to make them admin
+      const [ { count: c1 }, { count: c2 } ] = await Promise.all([
+        supabase.from('customers').select('*', { count: 'exact', head: true }),
+        supabase.from('employees').select('*', { count: 'exact', head: true })
+      ]);
+      const isFirstUser = (c1 === 0 && c2 === 0);
 
       const password_hash = await bcrypt.hash(password, 10);
+      const targetTable = (isFirstUser || role === 'employee' || role === 'admin') ? 'employees' : 'customers';
 
       const { data: newUser, error } = await supabase
-        .from('users')
+        .from(targetTable)
         .insert([{
           name,
           mobile_no,
           password_hash,
-          role: isFirstUser ? 'admin' : role,
           is_admin: isFirstUser,
           approval_status: isFirstUser ? 'approved' : 'pending',
           active: isFirstUser
@@ -193,16 +239,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       
-      // If it's the first user, we can log them in immediately
       if (isFirstUser && newUser) {
+        const fullNewUser = { ...newUser, role: 'admin' as UserRole };
         localStorage.setItem('matrix_user_id', newUser.id);
-        setProfile(newUser);
+        setProfile(fullNewUser);
         setUser({ id: newUser.id });
         toast.success('Admin account created and approved automatically!');
         return;
       }
       
-      // We don't sign in other users immediately because they need approval
       return;
     } catch (err: any) {
       console.error('SignUp Error:', err);

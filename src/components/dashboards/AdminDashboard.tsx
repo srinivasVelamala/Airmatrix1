@@ -7,7 +7,8 @@ import {
   Bell, ChevronRight, MoreVertical,
   Activity, CheckCircle, Clock, AlertTriangle,
   MapPin, Loader2, LogOut, UserCheck, UserX,
-  UserPlus
+  UserPlus, ShoppingBag, Plus, Trash2, Edit2,
+  Package, Image as ImageIcon, X
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -15,7 +16,12 @@ import {
   PieChart, Pie, Cell
 } from 'recharts';
 import { cn, getStatusColor, formatDate } from '../../lib/utils';
-import { getTickets, getUsers, updateUserStatus, assignTicket, type Ticket, type User } from '../../lib/supabase';
+import { 
+  getTickets, getProfiles, updateProfileStatus, 
+  assignTicket, getProducts, createProduct, 
+  updateProduct, deleteProduct,
+  type Ticket, type User, type Product 
+} from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
@@ -24,24 +30,42 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [profiles, setProfiles] = useState<User[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [assigningTicketId, setAssigningTicketId] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [userDirTab, setUserDirTab] = useState<'employees' | 'customers'>('employees');
+  const [gridDensity, setGridDensity] = useState(3); // 1: List, 2: Compact, 3: Dense
+
+  // Product modal state
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productForm, setProductForm] = useState({
+    name: '',
+    description: '',
+    price: 0,
+    category: 'Units',
+    stock_quantity: 0,
+    image_url: ''
+  });
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
 
   const fetchAllData = async () => {
     if (!myProfile) return;
     try {
       setLoading(true);
       console.log('Fetching all operations data...');
-      const [ticketData, profileData] = await Promise.all([
+      const [ticketData, profileData, productData] = await Promise.all([
         getTickets(myProfile.id, 'admin'),
-        getUsers()
+        getProfiles(),
+        getProducts()
       ]);
-      console.log(`Fetched ${ticketData.length} tickets and ${profileData.length} profiles`);
+      console.log(`Fetched ${ticketData.length} tickets, ${profileData.length} profiles, and ${productData.length} products`);
       setTickets(ticketData);
       setProfiles(profileData);
+      setProducts(productData);
     } catch (error: any) {
       console.error('Admin Fetch Error Details:', {
         message: error.message,
@@ -59,10 +83,10 @@ export default function AdminDashboard() {
     fetchAllData();
   }, [myProfile]);
 
-  const handleUpdateStatus = async (userId: string, updates: any) => {
+  const handleUpdateStatus = async (userId: string, role: any, updates: any) => {
     try {
       setIsUpdatingProfile(userId);
-      await updateUserStatus(userId, updates);
+      await updateProfileStatus(userId, role, updates);
       setProfiles(prev => prev.map(p => p.id === userId ? { ...p, ...updates } : p));
       toast.success('Status updated successfully');
     } catch (error: any) {
@@ -96,7 +120,8 @@ export default function AdminDashboard() {
   const filteredProfiles = profiles.filter(p => {
     const matchesSearch = p.mobile_no?.includes(searchTerm) || p.name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || p.approval_status === filterStatus;
-    return matchesSearch && matchesFilter;
+    const matchesRole = userDirTab === 'employees' ? (p.role === 'employee' || p.is_admin) : p.role === 'customer';
+    return matchesSearch && matchesFilter && matchesRole;
   });
 
   const pendingCount = tickets.filter(t => t.status === 'New').length;
@@ -138,7 +163,7 @@ export default function AdminDashboard() {
         </div>
         
         <nav className="flex-1 px-4 space-y-2">
-          {['Overview', 'Tickets', 'Users', 'Analytics', 'Settings'].map((item) => (
+          {['Overview', 'Tickets', 'Users', 'Store', 'Analytics', 'Settings'].map((item) => (
             <button
               key={item}
               onClick={() => setActiveTab(item)}
@@ -151,6 +176,7 @@ export default function AdminDashboard() {
                 {item === 'Overview' && <Activity size={18} />}
                 {item === 'Tickets' && <TicketIcon size={18} />}
                 {item === 'Users' && <Users size={18} />}
+                {item === 'Store' && <ShoppingBag size={18} />}
                 {item === 'Analytics' && <TrendingUp size={18} />}
                 {item}
               </div>
@@ -163,6 +189,11 @@ export default function AdminDashboard() {
                 {item === 'Tickets' && tickets.length > 0 && (
                   <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full ring-2 ring-slate-900">
                     {tickets.length}
+                  </span>
+                )}
+                {item === 'Store' && products.length > 0 && (
+                   <span className="bg-slate-700 text-slate-300 text-[10px] px-2 py-0.5 rounded-full ring-2 ring-slate-900">
+                    {products.length}
                   </span>
                 )}
               </div>
@@ -451,7 +482,7 @@ export default function AdminDashboard() {
                   <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Service Details</th>
                   <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</th>
                   <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Staff</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Employee</th>
                   <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Created At</th>
                 </tr>
               </thead>
@@ -497,7 +528,7 @@ export default function AdminDashboard() {
                                 defaultValue=""
                                 disabled={isAssigning}
                               >
-                                <option value="" disabled>Select Staff</option>
+                                <option value="" disabled>Select Employee</option>
                                 {profiles
                                   .filter(p => (p.role === 'employee' || p.is_admin) && p.approval_status === 'approved' && p.active)
                                   .map(p => (
@@ -529,7 +560,7 @@ export default function AdminDashboard() {
                               <button
                                 onClick={() => setAssigningTicketId(t.id)}
                                 className="opacity-0 group-hover/assign:opacity-100 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                title="Assign Staff"
+                                title="Assign Employee"
                               >
                                 <UserPlus size={16} />
                               </button>
@@ -662,20 +693,56 @@ export default function AdminDashboard() {
         </div>
 
         <div className="bg-white lg:rounded-[40px] rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="p-6 lg:p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h3 className="font-black text-slate-900 text-lg lg:text-xl tracking-tight">User Directory</h3>
-              <p className="text-xs lg:text-sm text-slate-500 font-medium">Manage access and account status</p>
+          <div className="p-6 lg:p-8 border-b border-slate-50 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-black text-slate-900 text-lg lg:text-xl tracking-tight">User Directory</h3>
+                <p className="text-xs lg:text-sm text-slate-500 font-medium">Manage access and account status</p>
+              </div>
+              <div className="flex gap-2 lg:gap-4 overflow-x-auto no-scrollbar">
+                <div className="px-3 lg:px-4 py-1.5 lg:py-2 bg-amber-50 rounded-xl text-[10px] lg:text-xs font-black uppercase text-amber-600 flex items-center gap-1.5 lg:gap-2 whitespace-nowrap">
+                  <Clock size={12} />
+                  {pendingUsersCount} Pending
+                </div>
+                <div className="px-3 lg:px-4 py-1.5 lg:py-2 bg-emerald-50 rounded-xl text-[10px] lg:text-xs font-black uppercase text-emerald-600 flex items-center gap-1.5 lg:gap-2 whitespace-nowrap">
+                  <CheckCircle size={12} />
+                  {approvedUsersCount} Active
+                </div>
+              </div>
             </div>
-            <div className="flex gap-2 lg:gap-4 overflow-x-auto no-scrollbar">
-              <div className="px-3 lg:px-4 py-1.5 lg:py-2 bg-amber-50 rounded-xl text-[10px] lg:text-xs font-black uppercase text-amber-600 flex items-center gap-1.5 lg:gap-2 whitespace-nowrap">
-                <Clock size={12} />
-                {pendingUsersCount} Pending
-              </div>
-              <div className="px-3 lg:px-4 py-1.5 lg:py-2 bg-emerald-50 rounded-xl text-[10px] lg:text-xs font-black uppercase text-emerald-600 flex items-center gap-1.5 lg:gap-2 whitespace-nowrap">
-                <CheckCircle size={12} />
-                {approvedUsersCount} Active
-              </div>
+
+            {/* Role Tabs */}
+            <div className="flex p-1 bg-slate-100 rounded-2xl w-fit">
+              <button
+                onClick={() => setUserDirTab('employees')}
+                className={cn(
+                  "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                  userDirTab === 'employees' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                Employees
+                <span className={cn(
+                  "px-1.5 py-0.5 rounded-md text-[8px]",
+                  userDirTab === 'employees' ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-500"
+                )}>
+                  {profiles.filter(p => p.role === 'employee' || p.is_admin).length}
+                </span>
+              </button>
+              <button
+                onClick={() => setUserDirTab('customers')}
+                className={cn(
+                  "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                  userDirTab === 'customers' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                Customers
+                <span className={cn(
+                  "px-1.5 py-0.5 rounded-md text-[8px]",
+                  userDirTab === 'customers' ? "bg-white text-slate-900 shadow-sm" : "bg-slate-200 text-slate-500"
+                )}>
+                  {profiles.filter(p => p.role === 'customer').length}
+                </span>
+              </button>
             </div>
           </div>
 
@@ -684,10 +751,14 @@ export default function AdminDashboard() {
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
                   <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">User Details</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Role</th>
+                  {userDirTab === 'employees' && (
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Role</th>
+                  )}
                   <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                   <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Active</th>
-                  <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Is Admin</th>
+                  {userDirTab === 'employees' && (
+                    <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Is Admin</th>
+                  )}
                   <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
@@ -713,7 +784,9 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-6 font-bold text-xs text-slate-600 truncate max-w-[100px]">{p.role}</td>
+                    {userDirTab === 'employees' && (
+                      <td className="px-6 py-6 font-bold text-xs text-slate-600 truncate max-w-[100px]">{p.role}</td>
+                    )}
                     <td className="px-6 py-6">
                       <div className="flex items-center gap-2">
                         <div className={cn(
@@ -734,7 +807,7 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-4 py-6 text-center">
                       <button
-                        onClick={() => handleUpdateStatus(p.id, { active: !p.active })}
+                        onClick={() => handleUpdateStatus(p.id, p.role, { active: !p.active })}
                         disabled={isUpdatingProfile === p.id}
                         className={cn(
                           "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
@@ -744,25 +817,27 @@ export default function AdminDashboard() {
                         {p.active ? 'Yes' : 'No'}
                       </button>
                     </td>
-                    <td className="px-4 py-6 text-center">
-                      <button
-                        onClick={() => handleUpdateStatus(p.id, { is_admin: !p.is_admin })}
-                        disabled={isUpdatingProfile === p.id}
-                        className={cn(
-                          "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                          p.is_admin ? "bg-purple-50 text-purple-600 border border-purple-100" : "bg-slate-100 text-slate-400 border border-slate-200"
-                        )}
-                      >
-                        {p.is_admin ? 'Admin' : 'User'}
-                      </button>
-                    </td>
+                    {userDirTab === 'employees' && (
+                      <td className="px-4 py-6 text-center">
+                        <button
+                          onClick={() => handleUpdateStatus(p.id, p.role, { is_admin: !p.is_admin })}
+                          disabled={isUpdatingProfile === p.id}
+                          className={cn(
+                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                            p.is_admin ? "bg-purple-50 text-purple-600 border border-purple-100" : "bg-slate-100 text-slate-400 border border-slate-200"
+                          )}
+                        >
+                          {p.is_admin ? 'Admin' : 'User'}
+                        </button>
+                      </td>
+                    )}
                     <td className="px-8 py-6">
                       <div className="flex items-center justify-end gap-2">
                         {p.approval_status === 'pending' && (
                           <>
                             <button
                               disabled={isUpdatingProfile === p.id}
-                              onClick={() => handleUpdateStatus(p.id, { approval_status: 'approved', active: true })}
+                              onClick={() => handleUpdateStatus(p.id, p.role, { approval_status: 'approved', active: true })}
                               className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-90"
                               title="Approve"
                             >
@@ -770,7 +845,7 @@ export default function AdminDashboard() {
                             </button>
                             <button
                               disabled={isUpdatingProfile === p.id}
-                              onClick={() => handleUpdateStatus(p.id, { approval_status: 'rejected', active: false })}
+                              onClick={() => handleUpdateStatus(p.id, p.role, { approval_status: 'rejected', active: false })}
                               className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm active:scale-90"
                               title="Reject"
                             >
@@ -781,7 +856,7 @@ export default function AdminDashboard() {
                         {p.approval_status === 'approved' && (
                           <button
                             disabled={isUpdatingProfile === p.id}
-                            onClick={() => handleUpdateStatus(p.id, { approval_status: 'disabled', active: false })}
+                            onClick={() => handleUpdateStatus(p.id, p.role, { approval_status: 'disabled', active: false })}
                             className="px-4 py-2 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-200"
                           >
                             Disable
@@ -790,7 +865,7 @@ export default function AdminDashboard() {
                         {(p.approval_status === 'disabled' || p.approval_status === 'rejected') && (
                           <button
                             disabled={isUpdatingProfile === p.id}
-                            onClick={() => handleUpdateStatus(p.id, { approval_status: 'approved', active: true })}
+                            onClick={() => handleUpdateStatus(p.id, p.role, { approval_status: 'approved', active: true })}
                             className="px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20"
                           >
                             Enable
@@ -820,7 +895,10 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <p className="font-bold text-slate-900 text-sm tracking-tight">{p.name}</p>
-                        <p className="text-[10px] text-slate-500 font-bold">{p.mobile_no} • {p.role}</p>
+                        <p className="text-[10px] text-slate-500 font-bold">
+                          {p.mobile_no}
+                          {userDirTab === 'employees' && ` • ${p.role}`}
+                        </p>
                       </div>
                    </div>
                    <div className="flex flex-col items-end gap-1">
@@ -833,7 +911,7 @@ export default function AdminDashboard() {
                         {p.approval_status}
                       </span>
                       <div className="flex gap-1">
-                        {p.is_admin && <span className="bg-purple-50 text-purple-600 border border-purple-100 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Admin</span>}
+                        {userDirTab === 'employees' && p.is_admin && <span className="bg-purple-50 text-purple-600 border border-purple-100 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Admin</span>}
                         {p.active && <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Live</span>}
                       </div>
                    </div>
@@ -844,14 +922,14 @@ export default function AdminDashboard() {
                      <>
                         <button
                           disabled={isUpdatingProfile === p.id}
-                          onClick={() => handleUpdateStatus(p.id, { approval_status: 'approved', active: true })}
+                          onClick={() => handleUpdateStatus(p.id, p.role, { approval_status: 'approved', active: true })}
                           className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 flex items-center justify-center gap-1.5"
                         >
                           <UserCheck size={14} /> Approve
                         </button>
                         <button
                           disabled={isUpdatingProfile === p.id}
-                          onClick={() => handleUpdateStatus(p.id, { approval_status: 'rejected', active: false })}
+                          onClick={() => handleUpdateStatus(p.id, p.role, { approval_status: 'rejected', active: false })}
                           className="flex-1 py-2.5 bg-red-50 text-red-600 border border-red-100 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5"
                         >
                           <UserX size={14} /> Reject
@@ -860,19 +938,21 @@ export default function AdminDashboard() {
                    ) : (
                      <div className="flex-1 flex gap-2">
                        <button
-                          onClick={() => handleUpdateStatus(p.id, { active: !p.active })}
+                          onClick={() => handleUpdateStatus(p.id, p.role, { active: !p.active })}
                           className="flex-1 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-500"
                         >
                           {p.active ? 'Deactivate' : 'Activate'}
                         </button>
+                        {userDirTab === 'employees' && (
+                          <button
+                            onClick={() => handleUpdateStatus(p.id, p.role, { is_admin: !p.is_admin })}
+                            className="flex-1 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-500"
+                          >
+                            {p.is_admin ? 'Demote' : 'Make Admin'}
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleUpdateStatus(p.id, { is_admin: !p.is_admin })}
-                          className="flex-1 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-500"
-                        >
-                          {p.is_admin ? 'Demote' : 'Make Admin'}
-                        </button>
-                        <button
-                          onClick={() => handleUpdateStatus(p.id, { approval_status: p.approval_status === 'disabled' ? 'approved' : 'disabled', active: p.approval_status === 'disabled' })}
+                          onClick={() => handleUpdateStatus(p.id, p.role, { approval_status: p.approval_status === 'disabled' ? 'approved' : 'disabled', active: p.approval_status === 'disabled' })}
                           className={cn(
                             "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest",
                             p.approval_status === 'disabled' ? "bg-blue-600 text-white" : "bg-red-50 text-red-500 border border-red-100"
@@ -898,6 +978,427 @@ export default function AdminDashboard() {
         </div>
       </div>
     )}
+    {activeTab === 'Store' && (
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1 overflow-x-auto no-scrollbar">
+            <div className="flex bg-slate-100 p-1 rounded-2xl w-fit">
+              {['All', 'Units', 'Accessories', 'Filters', 'Spare Parts'].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setFilterStatus(cat)}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                    filterStatus === cat || (cat === 'All' && filterStatus === 'all') ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                  )}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-2xl shrink-0">
+               <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Size</span>
+               <input 
+                 type="range" 
+                 min="1" 
+                 max="3" 
+                 step="1"
+                 value={gridDensity}
+                 onChange={(e) => setGridDensity(parseInt(e.target.value))}
+                 className="w-16 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+               />
+            </div>
+          </div>
+          <button 
+            onClick={() => {
+              setEditingProduct(null);
+              setProductForm({ name: '', description: '', price: 0, category: 'Units', stock_quantity: 0, image_url: '' });
+              setIsProductModalOpen(true);
+            }}
+            className="w-full md:w-auto bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
+          >
+            <Plus size={18} />
+            Add New Product
+          </button>
+        </div>
+
+        <div className={cn(
+          "grid gap-4 lg:gap-6 transition-all duration-300",
+          gridDensity === 1 ? "grid-cols-1" : 
+          gridDensity === 2 ? "grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : 
+          "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+        )}>
+          {products
+            .filter(p => filterStatus === 'all' || filterStatus === 'All' || p.category === filterStatus)
+            .map((product) => (
+              <motion.div 
+                layout
+                key={product.id}
+                className={cn(
+                  "bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex transition-all group",
+                  gridDensity === 1 ? "flex-row h-24 md:h-32" : "flex-col"
+                )}
+              >
+                <div className={cn(
+                  "bg-slate-50 relative overflow-hidden shrink-0",
+                  gridDensity === 1 ? "w-24 md:w-32 h-full" : "aspect-square w-full"
+                )}>
+                  {product.image_url ? (
+                    <img 
+                      src={product.image_url} 
+                      alt={product.name} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-200">
+                      <Package size={gridDensity === 3 ? 20 : 32} />
+                    </div>
+                  )}
+                  
+                  <div className={cn(
+                    "absolute top-2 right-2 flex gap-1 transition-opacity",
+                    gridDensity === 1 ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                  )}>
+                    <button 
+                      onClick={() => {
+                        setEditingProduct(product);
+                        setProductForm({
+                          name: product.name,
+                          description: product.description,
+                          price: product.price,
+                          category: product.category,
+                          stock_quantity: product.stock_quantity,
+                          image_url: product.image_url || ''
+                        });
+                        setIsProductModalOpen(true);
+                      }}
+                      className={cn(
+                        "p-1.5 bg-white/90 backdrop-blur-md rounded-lg text-slate-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm",
+                        gridDensity === 3 ? "p-1" : "p-1.5"
+                      )}
+                    >
+                      <Edit2 size={gridDensity === 3 ? 12 : 14} />
+                    </button>
+                    <button 
+                      onClick={async () => {
+                        if (confirm('Are you sure you want to delete this product?')) {
+                          try {
+                            await deleteProduct(product.id);
+                            setProducts(prev => prev.filter(p => p.id !== product.id));
+                            toast.success('Product deleted');
+                          } catch (error) {
+                            toast.error('Failed to delete product');
+                          }
+                        }
+                      }}
+                      className={cn(
+                        "p-1.5 bg-white/90 backdrop-blur-md rounded-lg text-slate-600 hover:bg-red-600 hover:text-white transition-all shadow-sm",
+                        gridDensity === 3 ? "p-1" : "p-1.5"
+                      )}
+                    >
+                      <Trash2 size={gridDensity === 3 ? 12 : 14} />
+                    </button>
+                  </div>
+                </div>
+                <div className={cn(
+                  "flex-1 flex flex-col justify-between",
+                  gridDensity === 3 ? "p-2" : "p-4"
+                )}>
+                  <div>
+                    {gridDensity < 3 && (
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[8px] font-black uppercase tracking-widest">{product.category}</span>
+                        {gridDensity === 1 && (
+                          <span className={cn(
+                            "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
+                            product.stock_quantity > 10 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                          )}>
+                            Stock: {product.stock_quantity}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <h4 className={cn(
+                      "font-black text-slate-900 leading-tight truncate",
+                      gridDensity === 3 ? "text-[10px]" : "text-sm"
+                    )}>{product.name}</h4>
+                    {gridDensity === 1 && (
+                      <p className="text-[10px] text-slate-500 font-medium line-clamp-1 mt-1 leading-relaxed">{product.description}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-50">
+                    <p className={cn(
+                      "font-black text-slate-900",
+                      gridDensity === 3 ? "text-xs" : "text-sm"
+                    )}>₹{product.price.toLocaleString()}</p>
+                    {gridDensity === 3 && (
+                      <span className={cn(
+                        "w-2 h-2 rounded-full",
+                        product.stock_quantity > 10 ? "bg-emerald-500" : "bg-red-500"
+                      )} title={`Stock: ${product.stock_quantity}`} />
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          }
+        </div>
+
+        {products.length === 0 && (
+          <div className="py-20 text-center">
+            <ShoppingBag size={48} className="mx-auto text-slate-100 mb-4" />
+            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">No products in store</p>
+          </div>
+        )}
+
+        {/* Product Modal */}
+        {isProductModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="bg-white rounded-[40px] w-full max-w-2xl overflow-hidden shadow-2xl relative"
+            >
+              <div className="p-8 lg:p-10 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                    {editingProduct ? 'Edit Item' : 'Add Store Item'}
+                  </h3>
+                  <p className="text-slate-500 text-xs font-medium uppercase tracking-widest mt-1">Matrix Inventory System</p>
+                </div>
+                <button 
+                  onClick={() => setIsProductModalOpen(false)}
+                  className="w-10 h-10 bg-white rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all shadow-sm"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <form className="p-8 lg:p-10 space-y-8" onSubmit={async (e) => {
+                  e.preventDefault();
+                  try {
+                    setIsSavingProduct(true);
+                    if (editingProduct) {
+                      await updateProduct(editingProduct.id, productForm);
+                      setProducts(prev => prev.map(p => p.id === editingProduct.id ? { ...p, ...productForm } : p));
+                      toast.success('Product updated');
+                    } else {
+                      const newProduct = await createProduct(productForm);
+                      setProducts(prev => [newProduct, ...prev]);
+                      toast.success('Product created');
+                    }
+                    setIsProductModalOpen(false);
+                  } catch (error) {
+                    toast.error('Failed to save product');
+                  } finally {
+                    setIsSavingProduct(false);
+                  }
+                }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Item Title</label>
+                        <input 
+                          type="text" 
+                          required
+                          placeholder="e.g., 1.5T Split AC Unit"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-transparent focus:ring-blue-100 focus:border-blue-400 transition-all text-sm"
+                          value={productForm.name}
+                          onChange={e => setProductForm({...productForm, name: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Category</label>
+                        <select 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-transparent focus:ring-blue-100 focus:border-blue-400 transition-all text-sm appearance-none"
+                          value={productForm.category}
+                          onChange={e => setProductForm({...productForm, category: e.target.value})}
+                        >
+                          <option>Units</option>
+                          <option>Accessories</option>
+                          <option>Filters</option>
+                          <option>Spare Parts</option>
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Price (₹)</label>
+                          <input 
+                            type="number" 
+                            required
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-transparent focus:ring-blue-100 focus:border-blue-400 transition-all text-sm"
+                            value={productForm.price || ''}
+                            onChange={e => setProductForm({...productForm, price: parseFloat(e.target.value)})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Stock Vol.</label>
+                          <input 
+                            type="number" 
+                            required
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-transparent focus:ring-blue-100 focus:border-blue-400 transition-all text-sm"
+                            value={productForm.stock_quantity || ''}
+                            onChange={e => setProductForm({...productForm, stock_quantity: parseInt(e.target.value)})}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Specification / Bio</label>
+                        <textarea 
+                          rows={4}
+                          placeholder="Details about the product, warranty, compatibility..."
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-transparent focus:ring-blue-100 focus:border-blue-400 transition-all text-sm resize-none"
+                          value={productForm.description}
+                          onChange={e => setProductForm({...productForm, description: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Media Attachment</label>
+                        <div className="relative group">
+                          <div className={cn(
+                            "w-full aspect-square bg-slate-100 rounded-[32px] border-2 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all",
+                            productForm.image_url ? "border-blue-200 bg-white" : "border-slate-200 hover:border-blue-400 group-hover:bg-slate-50"
+                          )}>
+                            {productForm.image_url ? (
+                              <div className="relative w-full h-full group/img">
+                                <img src={productForm.image_url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover/img:opacity-100 transition-all flex items-center justify-center">
+                                  <button 
+                                    type="button"
+                                    onClick={() => setProductForm({...productForm, image_url: ''})}
+                                    className="p-3 bg-red-500 text-white rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all"
+                                  >
+                                    <Trash2 size={20} />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center p-6 w-full h-full flex flex-col items-center justify-center relative cursor-pointer">
+                                <div className="w-16 h-16 bg-white rounded-3xl shadow-sm border border-slate-200 flex items-center justify-center text-slate-400 mb-4 group-hover:text-blue-500 group-hover:scale-110 transition-all">
+                                  <ImageIcon size={24} />
+                                </div>
+                                <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-1">Click to Upload</p>
+                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">JPG, PNG, WEBP (Max 5MB)</p>
+                                <input 
+                                  type="file" 
+                                  accept="image/*"
+                                  className="absolute inset-0 opacity-0 cursor-pointer"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => {
+                                        setProductForm({...productForm, image_url: reader.result as string});
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 flex justify-end gap-4">
+                    <button 
+                      type="button" 
+                      onClick={() => setIsProductModalOpen(false)}
+                      className="px-8 py-4 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={isSavingProduct}
+                      className="px-10 py-4 bg-slate-900 text-white rounded-[24px] font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-200 hover:bg-blue-600 hover:shadow-blue-100 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {isSavingProduct && <Loader2 size={16} className="animate-spin" />}
+                      {editingProduct ? 'Update Inventory' : 'Add to Catalog'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </div>
+    )}
+
+    {activeTab === 'Analytics' && (
+      <div className="space-y-12 animate-in fade-in duration-500">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm overflow-hidden">
+            <h3 className="font-black text-xl text-slate-900 tracking-tight mb-8">Service Demand</h3>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={WEEKLY_DATA}>
+                  <CartesianGrid strokeDasharray="8 8" vertical={false} stroke="#f1f5f9" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} 
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} 
+                  />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="tickets" 
+                    stroke="#2563eb" 
+                    strokeWidth={4} 
+                    dot={{ fill: '#2563eb', strokeWidth: 2, r: 6, stroke: '#fff' }}
+                    activeDot={{ r: 8, strokeWidth: 0 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm flex flex-col">
+            <h3 className="font-black text-xl text-slate-900 tracking-tight mb-8">Unit Distribution</h3>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Split', value: 45, color: '#3b82f6' },
+                      { name: 'Window', value: 30, color: '#f59e0b' },
+                      { name: 'Cassette', value: 15, color: '#10b981' },
+                      { name: 'Others', value: 10, color: '#94a3b8' }
+                    ]}
+                    innerRadius={70}
+                    outerRadius={100}
+                    paddingAngle={8}
+                    dataKey="value"
+                  >
+                    {[0,1,2,3].map((i) => <Cell key={i} fill={['#3b82f6', '#f59e0b', '#10b981', '#94a3b8'][i]} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
   </main>
       {/* Mobile Bottom Nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 h-16 px-2 flex items-center justify-around z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
@@ -905,6 +1406,7 @@ export default function AdminDashboard() {
           { id: 'Overview', icon: Activity, label: 'Ops' },
           { id: 'Tickets', icon: TicketIcon, label: 'Tickets' },
           { id: 'Users', icon: Users, label: 'Users' },
+          { id: 'Store', icon: ShoppingBag, label: 'Store' },
           { id: 'Analytics', icon: TrendingUp, label: 'Stats' }
         ].map((item) => (
           <button

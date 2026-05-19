@@ -14,8 +14,8 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
         manifest: {
-          name: 'Cool Breeze AC Service',
-          short_name: 'CoolBreeze',
+          name: 'AIRMATRIX',
+          short_name: 'AIRMATRIX',
           description: 'Professional AC Repair & Service Management',
           theme_color: '#3b82f6',
           icons: [

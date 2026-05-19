@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   LogIn, UserPlus, ShieldCheck, AlertCircle, 
   RefreshCw, Activity, CheckCircle2, XCircle,
-  Phone, Lock, User, Clock, ArrowRight
+  Phone, Lock, User, Clock, ArrowRight, Wind
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { isConfigError } from '../lib/supabase';
@@ -144,11 +144,11 @@ export default function LoginScreen() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/20 rounded-full -ml-12 -mb-12 blur-xl" />
           
-          <div className="w-16 h-16 lg:w-20 lg:h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-4 lg:mb-6 backdrop-blur-md shadow-xl">
-            <ShieldCheck size={32} className="lg:size-[40px]" />
+          <div className="w-16 h-16 lg:w-20 lg:h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-4 lg:mb-6 backdrop-blur-md shadow-xl border border-white/30">
+            <Wind size={32} className="lg:size-[40px] text-white" />
           </div>
-          <h1 className="text-3xl lg:text-4xl font-black tracking-tighter mb-1 lg:mb-2 text-white">AIRMATRIX</h1>
-          <p className="text-blue-100 uppercase tracking-[0.2em] text-[8px] lg:text-[10px] font-black opacity-80 font-inter">Service Excellence</p>
+          <h1 className="text-3xl lg:text-4xl font-black tracking-tighter mb-1 lg:mb-2 text-white italic">AIRMATRIX</h1>
+          <p className="text-blue-100 uppercase tracking-[0.3em] text-[8px] lg:text-[10px] font-black opacity-90 font-inter">Precision Operations</p>
         </div>
 
         <div className="p-6 lg:p-10 space-y-6 lg:space-y-8">
@@ -243,7 +243,7 @@ export default function LoginScreen() {
                         role === 'employee' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400"
                       )}
                     >
-                      Staff
+                      Employee
                     </button>
                   </div>
                 </>
