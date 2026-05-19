@@ -1,0 +1,9 @@
+{
+  "appId": "com.matrix.acservice",
+  "appName": "AirMatrix AC Service",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

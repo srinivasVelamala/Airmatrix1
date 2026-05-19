@@ -1,5 +1,5 @@
 {
-  "name": "AIRMATRIX",
+  "name": "AirMatrix AC Service",
   "description": "Enterprise HVAC Maintenance Platform with real-time technician tracking, automated ticket workflows, and role-based dashboards.",
   "requestFramePermissions": [
     "geolocation",

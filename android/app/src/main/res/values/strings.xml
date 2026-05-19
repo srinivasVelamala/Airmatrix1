@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AirMatrix AC Service</string>
+    <string name="title_activity_main">AirMatrix AC Service</string>
+    <string name="package_name">com.matrix.acservice</string>
+    <string name="custom_url_scheme">com.matrix.acservice</string>
+</resources>
